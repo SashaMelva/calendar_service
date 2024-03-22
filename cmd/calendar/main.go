@@ -23,7 +23,7 @@ func init() {
 
 func main() {
 
-	flag.Parse()
+	//flag.Parse()
 
 	// if flag.Arg(0) == "version" {
 	// 	printVersion()

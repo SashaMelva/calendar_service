@@ -1,0 +1,26 @@
+version: "3"
+
+services:
+  calendar_service:
+    build: ./
+    command: ./wait-for-postgres.sh postgres ./calendar_service
+    depends_on:
+      - postgres
+    ports:
+      - "8088:8088"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      
+
+  postgres:
+    restart: always
+    image: postgres:latest
+    volumes:
+      - ./scripts/setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: calendardb

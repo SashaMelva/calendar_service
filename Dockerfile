@@ -15,8 +15,10 @@ RUN chmod +x ${CODE_DIR}wait-for-postgres.sh
 # Кэшируем слои с модулями
 COPY go.mod .
 COPY go.sum .
+
 RUN go mod download
 RUN go build -o calendar_service ./cmd/calendar/main.go
+
 
 
 

@@ -9,8 +9,7 @@ services:
     ports:
       - "8088:8088"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      DB_PASSWORD: qwer
       
 
   postgres:
@@ -21,6 +20,4 @@ services:
     ports:
       - "5436:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: calendardb
+      POSTGRES_PASSWORD: qwer

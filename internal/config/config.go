@@ -6,9 +6,14 @@ import (
 )
 
 type Config struct {
-	Url      string
+	App      *ConfigApp
 	Logger   *ConfigLogger
 	DataBase *ConfigDB
+}
+
+type ConfigApp struct {
+	Host string
+	Port string
 }
 
 type ConfigLogger struct {
@@ -43,6 +48,10 @@ func NewConfig(pahToFile string) Config {
 		User:     viper.Get("usesrDB").(string),
 		Password: viper.Get("passwordDB").(string),
 	}
+	confApp := ConfigApp{
+		Host: viper.Get("Host").(string),
+		Port: viper.Get("Port").(string),
+	}
 
 	level, err := zapcore.ParseLevel(viper.Get("Level").(string))
 	if err != nil {
@@ -51,7 +60,9 @@ func NewConfig(pahToFile string) Config {
 		confLog = ConfigLogger{level, viper.Get("logEncoding").(string)}
 	}
 
-	conf := Config{viper.Get("Url").(string), &confLog, &confDB}
-
-	return conf
+	return Config{
+		App:      &confApp,
+		Logger:   &confLog,
+		DataBase: &confDB,
+	}
 }

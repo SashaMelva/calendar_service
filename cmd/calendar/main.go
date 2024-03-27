@@ -12,7 +12,7 @@ import (
 	config "github.com/SashaMelva/calendar_service/internal/config"
 	logger "github.com/SashaMelva/calendar_service/internal/logger"
 	internalhttp "github.com/SashaMelva/calendar_service/internal/server/http"
-	memorystorage "github.com/SashaMelva/calendar_service/internal/storage/memory"
+	sqlstorage "github.com/SashaMelva/calendar_service/internal/storage/sql"
 )
 
 var configFile string
@@ -33,10 +33,10 @@ func main() {
 	config := config.NewConfig(configFile)
 	logg := logger.NewLogger(config.Logger)
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
+	storage := sqlstorage.New(config.DataBase, logg)
+	calendar := app.New(logg, storage, config.App)
 
-	server := internalhttp.NewServer(logg, calendar)
+	server := internalhttp.NewServer(logg, *calendar)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

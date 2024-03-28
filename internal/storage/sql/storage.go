@@ -30,5 +30,6 @@ func (s *Storage) Connect(ctx context.Context) error {
 }
 
 func (s *Storage) Close(ctx context.Context) error {
+	s.StorageDb.Close()
 	return nil
 }

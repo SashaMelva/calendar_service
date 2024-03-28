@@ -25,9 +25,16 @@ func New(logger Logger, storage Storage, conf *config.ConfigApp) *App {
 		ConnectionDB: &storage,
 	}
 }
+func (a *App) GetAllEvents(ctx context.Context) error {
+	// TODO
+
+	return nil
+	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
+}
 
 func (a *App) CreateEvent(ctx context.Context, id, title string) error {
 	// TODO
+
 	return nil
 	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
 }

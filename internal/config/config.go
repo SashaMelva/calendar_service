@@ -49,8 +49,8 @@ func NewConfig(pahToFile string) Config {
 		Password: viper.Get("passwordDB").(string),
 	}
 	confApp := ConfigApp{
-		Host: viper.Get("Host").(string),
-		Port: viper.Get("Port").(string),
+		Host: viper.Get("hostServer").(string),
+		Port: viper.Get("portServer").(string),
 	}
 
 	level, err := zapcore.ParseLevel(viper.Get("Level").(string))

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -22,7 +23,7 @@ func init() {
 }
 
 func main() {
-
+	fmt.Println("!231321")
 	//flag.Parse()
 
 	// if flag.Arg(0) == "version" {
@@ -31,12 +32,12 @@ func main() {
 	// }
 
 	config := config.NewConfig(configFile)
-	logg := logger.NewLogger(config.Logger)
+	log := logger.NewLogger(config.Logger)
 
-	storage := sqlstorage.New(config.DataBase, logg)
-	calendar := app.New(logg, storage, config.App)
+	connection := sqlstorage.New(config.DataBase, log)
+	calendar := app.New(log, connection, config.App)
 
-	server := internalhttp.NewServer(logg, *calendar)
+	server := internalhttp.NewServer(log, calendar)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -49,14 +50,14 @@ func main() {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			log.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	log.Info("calendar is running...")
 
 	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
+		log.Error("failed to start http server: " + err.Error())
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}

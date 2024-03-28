@@ -8,3 +8,6 @@ hostDB =  ""
 portDB = ""
 usesrDB = ""
 passwordDB = ""
+
+hostServer = ""
+portServer = ""

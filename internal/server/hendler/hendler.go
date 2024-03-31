@@ -1,12 +1,13 @@
 package hendler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
+	"time"
 
 	application "github.com/SashaMelva/calendar_service/internal/app"
 	"go.uber.org/zap"
@@ -18,6 +19,11 @@ type Service struct {
 	sync.RWMutex
 }
 
+type ResponseBody struct {
+	Message      string
+	MessageError string
+}
+
 func NewService(log *zap.SugaredLogger, app *application.App) *Service {
 	return &Service{
 		Logger: *log,
@@ -26,14 +32,17 @@ func NewService(log *zap.SugaredLogger, app *application.App) *Service {
 }
 
 func (s *Service) HendlerEvent(w http.ResponseWriter, req *http.Request) {
+	// resp := &ResponseBody{}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
 	if req.URL.Path == "/event/" {
 		switch req.Method {
 		case http.MethodPost:
-			s.createEventHandler(w, req)
+			s.createEventHandler(w, req, ctx)
 		case http.MethodPut:
 			s.editEventHandler(w, req)
 		case http.MethodGet:
-			s.getAllEventsHandler(w, req)
+			s.getAllEventsHandler(w, req, ctx)
 		case http.MethodDelete:
 			s.deleteAllEventsHandler(w, req)
 		default:
@@ -41,37 +50,42 @@ func (s *Service) HendlerEvent(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	} else {
-		path := strings.Trim(req.URL.Path, "/")
-		pathParts := strings.Split(path, "/")
+		args := req.URL.Query()
+		id := args.Get("id")
+		// date := args.Get("date")
 
-		if len(pathParts) < 2 {
-			s.Logger.Error("expect /event/<id> in event handler")
-			return
+		if len(id) > 0 {
+			intId, err := strconv.Atoi(id)
+			if err != nil {
+				s.Logger.Error(fmt.Sprintf("is not valid if event id, got %v", id))
+				// resp.Error.Message = fmt.Sprintf("is not valid if event id, got %v", id)
+				// w.WriteHeader()
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				// w.WriteHeader(http.StatusBadRequest)
+				// resp.MessageError = fmt.Sprintf("is not valid if event id, got %v", id)
+				// js, _ := json.Marshal(resp)
+				// w.Write(js)
+				return
+			}
+
+			switch req.Method {
+			case http.MethodDelete:
+				s.deleteEventHandlerById(w, req, intId)
+			case http.MethodGet:
+				s.getEventHandlerById(w, req, intId)
+			default:
+				s.Logger.Error(fmt.Sprintf("expect method GET or DELETE at /event/<id>, got %v", req.Method))
+				return
+			}
 		}
 
-		id, err := strconv.Atoi(pathParts[1])
-
-		if err != nil {
-			s.Logger.Error(err)
-			return
-		}
-
-		switch req.Method {
-		case http.MethodDelete:
-			s.deleteEventHandler(w, req, int(id))
-		case http.MethodGet:
-			s.getEventHandler(w, req, int(id))
-		default:
-			s.Logger.Error(fmt.Sprintf("expect method GET or DELETE at /event/<id>, got %v", req.Method))
-			return
-		}
 	}
 }
 
-func (s *Service) getAllEventsHandler(w http.ResponseWriter, req *http.Request) {
-	s.Logger.Info("handling get all tasks at %s\n", req.URL.Path)
+func (s *Service) getAllEventsHandler(w http.ResponseWriter, req *http.Request, ctx context.Context) {
+	s.Logger.Info("handling get all events at %s\n", req.URL.Path)
 
-	allTasks := s.app.GetAllEvents()
+	allTasks := s.app.GetAllEvents(ctx)
 	js, err := json.Marshal(allTasks)
 
 	if err != nil {
@@ -79,11 +93,23 @@ func (s *Service) getAllEventsHandler(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
 	w.Write(js)
 }
 
-func (s *Service) createEventHandler(w http.ResponseWriter, req *http.Request) {
+func (s *Service) createEventHandler(w http.ResponseWriter, req *http.Request, ctx context.Context) {
+	s.Logger.Info("add new event at %s\n", req.URL.Path)
+	err := s.app.GetAllEvents(ctx)
+
+	if err != nil {
+		s.Logger.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+
 }
 
 func (s *Service) editEventHandler(w http.ResponseWriter, req *http.Request) {
@@ -92,8 +118,8 @@ func (s *Service) editEventHandler(w http.ResponseWriter, req *http.Request) {
 func (s *Service) deleteAllEventsHandler(w http.ResponseWriter, req *http.Request) {
 }
 
-func (s *Service) deleteEventHandler(w http.ResponseWriter, req *http.Request) {
+func (s *Service) deleteEventHandlerById(w http.ResponseWriter, req *http.Request, id int) {
 }
 
-func (s *Service) getEventHandler(w http.ResponseWriter, req *http.Request) {
+func (s *Service) getEventHandlerById(w http.ResponseWriter, req *http.Request, id int) {
 }

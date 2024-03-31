@@ -9,11 +9,11 @@ import (
 	"go.uber.org/zap"
 )
 
-type Storage struct {
+type StorageConnection struct {
 	StorageDb *sql.DB
 }
 
-func New(confDB *config.ConfigDB, log *zap.SugaredLogger) *Storage {
+func New(confDB *config.ConfigDB, log *zap.SugaredLogger) *StorageConnection {
 	dsn := "user=" + confDB.User + " dbname=" + confDB.NameDB + " sslmode=verify-full password=" + confDB.Password
 	storage, err := sql.Open("pgx", dsn)
 
@@ -21,15 +21,15 @@ func New(confDB *config.ConfigDB, log *zap.SugaredLogger) *Storage {
 		log.Fatal("Cannot open pgx driver: %w", err)
 	}
 
-	return &Storage{storage}
+	return &StorageConnection{storage}
 }
 
-func (s *Storage) Connect(ctx context.Context) error {
+func (s *StorageConnection) Connect(ctx context.Context) error {
 	err := s.StorageDb.PingContext(ctx)
 	return err
 }
 
-func (s *Storage) Close(ctx context.Context) error {
+func (s *StorageConnection) Close(ctx context.Context) error {
 	s.StorageDb.Close()
 	return nil
 }

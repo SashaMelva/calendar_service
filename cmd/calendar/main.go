@@ -13,6 +13,7 @@ import (
 	config "github.com/SashaMelva/calendar_service/internal/config"
 	logger "github.com/SashaMelva/calendar_service/internal/logger"
 	internalhttp "github.com/SashaMelva/calendar_service/internal/server/http"
+	memorystorage "github.com/SashaMelva/calendar_service/internal/storage/memory"
 	sqlstorage "github.com/SashaMelva/calendar_service/internal/storage/sql"
 )
 
@@ -33,9 +34,11 @@ func main() {
 
 	config := config.NewConfig(configFile)
 	log := logger.NewLogger(config.Logger)
-
+	//Соединение с бд
 	connection := sqlstorage.New(config.DataBase, log)
-	calendar := app.New(log, connection, config.App)
+	//Событие
+	memstorage := memorystorage.New(connection.StorageDb)
+	calendar := app.New(log, memstorage, config.App)
 
 	server := internalhttp.NewServer(log, calendar)
 

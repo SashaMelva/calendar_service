@@ -23,9 +23,10 @@ type Logger interface { // TODO
 
 func NewServer(log *zap.SugaredLogger, app *application.App) *Server {
 	log.Info("URL api" + app.Host + ":" + app.Port)
+	timeout := 10 * time.Second
 
 	mux := http.NewServeMux()
-	h := hendler.NewService(log, app)
+	h := hendler.NewService(log, app, timeout)
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello World!")
@@ -37,8 +38,8 @@ func NewServer(log *zap.SugaredLogger, app *application.App) *Server {
 		&http.Server{
 			Addr:         app.Host + ":" + app.Port,
 			Handler:      mux,
-			ReadTimeout:  10 * time.Second,
-			WriteTimeout: 10 * time.Second,
+			ReadTimeout:  timeout,
+			WriteTimeout: timeout,
 		},
 	}
 }

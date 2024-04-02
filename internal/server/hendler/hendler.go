@@ -10,12 +10,14 @@ import (
 	"time"
 
 	application "github.com/SashaMelva/calendar_service/internal/app"
+	"github.com/SashaMelva/calendar_service/internal/storage"
 	"go.uber.org/zap"
 )
 
 type Service struct {
 	Logger zap.SugaredLogger
 	app    application.App
+	// Ctx    context.Context
 	sync.RWMutex
 }
 
@@ -24,10 +26,11 @@ type ResponseBody struct {
 	MessageError string
 }
 
-func NewService(log *zap.SugaredLogger, app *application.App) *Service {
+func NewService(log *zap.SugaredLogger, app *application.App, timeout time.Duration) *Service {
 	return &Service{
 		Logger: *log,
 		app:    *app,
+		// Ctx:    ctx,
 	}
 }
 
@@ -85,8 +88,14 @@ func (s *Service) HendlerEvent(w http.ResponseWriter, req *http.Request) {
 func (s *Service) getAllEventsHandler(w http.ResponseWriter, req *http.Request, ctx context.Context) {
 	s.Logger.Info("handling get all events at %s\n", req.URL.Path)
 
-	allTasks := s.app.GetAllEvents(ctx)
-	js, err := json.Marshal(allTasks)
+	allEvents, err := s.app.GetAllEvents(ctx)
+
+	if err != nil {
+		s.Logger.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	js, err := json.Marshal(allEvents)
 
 	if err != nil {
 		s.Logger.Error(w, err.Error(), http.StatusInternalServerError)
@@ -99,8 +108,10 @@ func (s *Service) getAllEventsHandler(w http.ResponseWriter, req *http.Request, 
 }
 
 func (s *Service) createEventHandler(w http.ResponseWriter, req *http.Request, ctx context.Context) {
-	s.Logger.Info("add new event at %s\n", req.URL.Path)
-	err := s.app.GetAllEvents(ctx)
+	s.Logger.Info("add new event at %v\n", req.URL.Path)
+	event := &storage.Event{}
+
+	err := s.app.CreateEvent(ctx, event)
 
 	if err != nil {
 		s.Logger.Error(w, err.Error(), http.StatusInternalServerError)

@@ -14,7 +14,7 @@ type StorageConnection struct {
 }
 
 func New(confDB *config.ConfigDB, log *zap.SugaredLogger) *StorageConnection {
-	dsn := "user=" + confDB.User + " dbname=" + confDB.NameDB + " sslmode=verify-full password=" + confDB.Password
+	dsn := "user=" + confDB.User + " dbname=" + confDB.NameDB + " password=" + confDB.Password
 	storage, err := sql.Open("pgx", dsn)
 
 	if err != nil {

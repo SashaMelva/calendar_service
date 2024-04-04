@@ -3,7 +3,6 @@ package memorystorage
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"sync"
 
 	storage "github.com/SashaMelva/calendar_service/internal/storage"
@@ -49,10 +48,16 @@ func (s *Storage) GetAllEvents() ([]storage.Event, error) {
 
 func (s *Storage) GetByIdEvent(id int) (*storage.Event, error) {
 	event := &storage.Event{}
-	query := `select * from events where id = $1`
-	row := s.ConnectionDB.QueryRowContext(s.Ctx, query)
+	query := `select id, title, date_time_start, date_time_end, description from events where id = $1`
+	row := s.ConnectionDB.QueryRow(query, id)
 
-	err := row.Scan(event)
+	err := row.Scan(
+		&event.ID,
+		&event.Title,
+		&event.DateTimeStart,
+		&event.DateTimeEnd,
+		&event.Description,
+	)
 
 	if err == sql.ErrNoRows {
 		return nil, err
@@ -63,16 +68,11 @@ func (s *Storage) GetByIdEvent(id int) (*storage.Event, error) {
 	return event, nil
 }
 
-func (s *Storage) CreateEvent(event *storage.Event) (int64, error) {
-	fmt.Println("sql")
-	query := `insert into events(title, descriptioin) values($1, $2)`
-	result, err := s.ConnectionDB.Exec(query, event.Title, event.Descriptioin) // sql.Result
-
-	if err != nil {
-		return 0, err
-	}
-	fmt.Println("sql2")
-	eventId, err := result.LastInsertId()
+func (s *Storage) CreateEvent(event *storage.Event) (int, error) {
+	var eventId int
+	query := `insert into events(title, description, date_time_start, date_time_end) values($1, $2, $3, $4) RETURNING id`
+	result := s.ConnectionDB.QueryRow(query, event.Title, event.Description, event.DateTimeStart, event.DateTimeEnd) // sql.Result
+	err := result.Scan(&eventId)
 
 	if err != nil {
 		return 0, err
@@ -80,55 +80,30 @@ func (s *Storage) CreateEvent(event *storage.Event) (int64, error) {
 
 	return eventId, nil
 }
-func (s *Storage) DeleteEvent(id int) error {
+
+func (s *Storage) DeleteEventById(id int) error {
+
+	query := `delete from events where id = $1`
+	_, err := s.ConnectionDB.Exec(query, id) // sql.Result
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
+
+func (s *Storage) DeleteEventByDate(id int) error {
+	return nil
+}
+
 func (s *Storage) EditEvent(event *storage.Event) error {
+	query := `update events set title=$1, description=$2, date_time_start=$3, date_time_end=$4 where id=$5`
+	_, err := s.ConnectionDB.Exec(query, event.Title, event.Description, event.DateTimeStart, event.DateTimeEnd, event.ID)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
-
-// func SelectAll() {
-// 	qwery := "select * from events"
-// }
-
-// func SelectById() {
-// 	query := `
-// 			select *
-// 			from events
-// 			where id = $1
-// 			`
-// 	rows, err := db.QueryContext(ctx, query, id)
-
-// 	if err == sql.ErrNoRows {
-// 		// строки не найдено
-// 	} else if err != nil {
-// 		// "настоящая" ошибка
-// 	}
-
-// 	defer rows.Close()
-
-// 	for rows.Next() {
-// 		var id int64
-// 		var title, descr string
-// 		if err := rows.Scan(&id, &title, &descr); err != nil {
-// 			// ошибка сканирования
-// 		}
-// 		// обрабатываем строку
-// 		fmt.Printf("%d %s %s\n", id, title, descr)
-// 	}
-// 	if err := rows.Err(); err != nil {
-// 		// ошибка при получении результатов
-// 	}
-// }
-
-// func Create() {
-// 	qwery := ""
-// }
-
-// func Delete() {
-// 	qwery := ""
-// }
-
-// func Edit() {
-// 	qwery := ""
-// }

@@ -14,7 +14,7 @@ type StorageConnection struct {
 }
 
 func New(confDB *config.ConfigDB, log *zap.SugaredLogger) *StorageConnection {
-	dsn := "user=" + confDB.User + " dbname=" + confDB.NameDB + " password=" + confDB.Password
+	dsn := "postgres://" + confDB.User + ":" + confDB.Password + "@" + confDB.Host + ":" + confDB.Port + "/" + confDB.NameDB
 	storage, err := sql.Open("pgx", dsn)
 
 	if err != nil {

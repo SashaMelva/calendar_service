@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"sync"
@@ -58,6 +59,7 @@ func (s *Service) HendlerEvent(w http.ResponseWriter, req *http.Request) {
 		// date := args.Get("date")
 
 		if len(id) > 0 {
+			s.Logger.Info("id event " + id)
 			intId, err := strconv.Atoi(id)
 			if err != nil {
 				s.Logger.Error(fmt.Sprintf("is not valid if event id, got %v", id))
@@ -75,9 +77,9 @@ func (s *Service) HendlerEvent(w http.ResponseWriter, req *http.Request) {
 			case http.MethodDelete:
 				s.deleteEventHandlerById(w, req, intId)
 			case http.MethodGet:
-				s.getEventHandlerById(w, req, intId)
+				s.getEventHandlerById(w, ctx, intId)
 			default:
-				s.Logger.Error(fmt.Sprintf("expect method GET or DELETE at /event/<id>, got %v", req.Method))
+				s.Logger.Error(fmt.Sprintf("expect method GET or DELETE at /event?=<id>, got %v", req.Method))
 				return
 			}
 		}
@@ -109,12 +111,26 @@ func (s *Service) getAllEventsHandler(w http.ResponseWriter, req *http.Request, 
 
 func (s *Service) createEventHandler(w http.ResponseWriter, req *http.Request, ctx context.Context) {
 	s.Logger.Info("add new event at %v\n", req.URL.Path)
-	event := &storage.Event{}
+	event := storage.Event{}
 
-	err := s.app.CreateEvent(ctx, event)
-
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		s.Logger.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer req.Body.Close()
+
+	errUnmarsahal := json.Unmarshal(body, &event)
+
+	if errUnmarsahal != nil {
+		s.Logger.Error(w, errUnmarsahal.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	errCreater := s.app.CreateEvent(ctx, &event)
+
+	if errCreater != nil {
+		s.Logger.Error(w, errCreater.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -132,5 +148,24 @@ func (s *Service) deleteAllEventsHandler(w http.ResponseWriter, req *http.Reques
 func (s *Service) deleteEventHandlerById(w http.ResponseWriter, req *http.Request, id int) {
 }
 
-func (s *Service) getEventHandlerById(w http.ResponseWriter, req *http.Request, id int) {
+func (s *Service) getEventHandlerById(w http.ResponseWriter, ctx context.Context, id int) {
+	s.Logger.Info("handling get event at by id %v", id)
+
+	allEvent, err := s.app.GetByIdEvent(ctx, id)
+
+	if err != nil {
+		s.Logger.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	js, err := json.Marshal(allEvent)
+
+	if err != nil {
+		s.Logger.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(js)
 }

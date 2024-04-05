@@ -17,13 +17,10 @@ type App struct {
 	Logger  *zap.SugaredLogger
 }
 
-type Logger interface { // TODO
-}
-
 type Storage interface {
 	GetAllEvents() error
 	CreateEvent(storage.Event) error
-	DeleteEvent(int) error
+	DeleteEventById(int) error
 	EditEvent(storage.Event) error
 	GetByIdEvent(int) error
 }
@@ -57,25 +54,35 @@ func (a *App) GetByIdEvent(ctx context.Context, id int) (*storage.Event, error) 
 }
 
 func (a *App) CreateEvent(ctx context.Context, event *storage.Event) error {
-	a.Logger.Info("qwqwqw")
 	id, err := a.storage.CreateEvent(event)
 
 	if err != nil {
 		a.Logger.Error(err)
+	} else {
+		a.Logger.Info(fmt.Sprintf("Create event whith id = %v", id))
 	}
 
-	a.Logger.Info(fmt.Sprintf("Create event whith id = %v", id))
 	return nil
 }
-func (a *App) DeleteEvent(ctx context.Context, id, title string) error {
-	// TODO
-	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
-}
-func (a *App) EditEvent(ctx context.Context, id, title string) error {
-	// TODO
-	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
-}
+func (a *App) DeleteEventById(id int) error {
+	err := a.storage.DeleteEventById(id)
 
-// TODO
+	if err != nil {
+		a.Logger.Error(err)
+	} else {
+		a.Logger.Info(fmt.Sprintf("Delet event whith id = %v", id))
+	}
+
+	return err
+}
+func (a *App) EditEvent(ctx context.Context, event *storage.Event) error {
+	err := a.storage.EditEvent(event)
+
+	if err != nil {
+		a.Logger.Error(err)
+	} else {
+		a.Logger.Info(fmt.Sprintf("Update event whith id = %v", event.ID))
+	}
+
+	return err
+}

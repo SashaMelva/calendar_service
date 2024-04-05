@@ -69,7 +69,7 @@ func TestGetByIdEvent(t *testing.T) {
 			event, err := s.GetByIdEvent(tc.id)
 			fmt.Println(event)
 			if event.ID != tc.id {
-				t.Error(fmt.Sprintf("id event != 0 %v", tc.id))
+				t.Error("id event != 0")
 			}
 			if err != nil {
 				t.Error(err.Error())
@@ -116,7 +116,7 @@ func TestEditEvent(t *testing.T) {
 		{
 			name: "all fields are there",
 			event: &storage.Event{
-				ID:            3,
+				ID:            2,
 				Title:         "test",
 				Description:   "test",
 				DateTimeStart: &date,

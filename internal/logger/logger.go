@@ -18,7 +18,7 @@ func NewLogger(conf *config.ConfigLogger) *zap.SugaredLogger {
 		DisableCaller:    true,
 		Development:      true,
 		Encoding:         conf.LogEncoding,
-		OutputPaths:      []string{"stdout", "../../filelog/" + fileName.Format("01-02-2006") + ".log"},
+		OutputPaths:      []string{"stdout", "" + fileName.Format("01-02-2006") + ".log"},
 		ErrorOutputPaths: []string{"stderr"},
 		EncoderConfig:    zap.NewDevelopmentEncoderConfig(),
 	}
@@ -29,3 +29,5 @@ func NewLogger(conf *config.ConfigLogger) *zap.SugaredLogger {
 	logger.Debug("Debug mode enabled")
 	return logger
 }
+
+// "./filelog/

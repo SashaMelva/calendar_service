@@ -1,6 +1,10 @@
 package storage
 
-import "time"
+import (
+	"time"
+
+	"go.uber.org/zap"
+)
 
 type MyTime *time.Time
 
@@ -28,4 +32,14 @@ func Date(myTime *time.Time) *string {
 	}
 
 	return nil
+}
+
+func StrToTimeformat(str string, loger zap.SugaredLogger) *time.Time {
+	time, err := time.Parse("2006-01-02", str)
+	if err != nil {
+		loger.Error("Dont convert string to *time.Time format str:" + str)
+		return nil
+	}
+
+	return &time
 }

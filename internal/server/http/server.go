@@ -7,7 +7,7 @@ import (
 	"time"
 
 	application "github.com/SashaMelva/calendar_service/internal/app"
-	hendler "github.com/SashaMelva/calendar_service/internal/server/hendler"
+	"github.com/SashaMelva/calendar_service/internal/server/hendler"
 	"go.uber.org/zap"
 )
 

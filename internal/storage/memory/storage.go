@@ -82,18 +82,13 @@ func (s *Storage) CreateEvent(event *storage.Event) (int, error) {
 }
 
 func (s *Storage) DeleteEventById(id int) error {
-
 	query := `delete from events where id = $1`
-	_, err := s.ConnectionDB.Exec(query, id) // sql.Result
+	_, err := s.ConnectionDB.Exec(query, id)
 
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (s *Storage) DeleteEventByDate(id int) error {
 	return nil
 }
 

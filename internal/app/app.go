@@ -3,11 +3,20 @@ package app
 import (
 	"context"
 	"fmt"
+	"time"
 
 	config "github.com/SashaMelva/calendar_service/internal/config"
 	storage "github.com/SashaMelva/calendar_service/internal/storage"
 	memorystorage "github.com/SashaMelva/calendar_service/internal/storage/memory"
 	"go.uber.org/zap"
+)
+
+type Period string
+
+const (
+	Day    Period = "Day"
+	Week   Period = "Week"
+	Mounth Period = "Mounth"
 )
 
 type App struct {
@@ -85,4 +94,46 @@ func (a *App) EditEvent(ctx context.Context, event *storage.Event) error {
 	}
 
 	return err
+}
+
+func (a *App) GetEventByPeriod(period Period, startDate *time.Time) ([]storage.Event, error) {
+	l, err := time.LoadLocation("Europe/Russia")
+	if err != nil {
+		a.Logger.Error(err)
+	}
+
+	startDateTime := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, l)
+	endDateTime := startDateTime.Add(24 * time.Hour)
+
+	switch period {
+	case "Week":
+		switch startDateTime.Weekday() {
+		case time.Monday:
+			endDateTime = startDateTime.Add(7 * 24 * time.Hour)
+		case time.Tuesday:
+			endDateTime = startDateTime.Add(6 * 24 * time.Hour)
+		case time.Wednesday:
+			endDateTime = startDateTime.Add(5 * 24 * time.Hour)
+		case time.Thursday:
+			endDateTime = startDateTime.Add(4 * 24 * time.Hour)
+		case time.Friday:
+			endDateTime = startDateTime.Add(3 * 24 * time.Hour)
+		case time.Saturday:
+			endDateTime = startDateTime.Add(2 * 24 * time.Hour)
+		case time.Sunday:
+			endDateTime = startDateTime.Add(1 * 24 * time.Hour)
+		}
+	case "Mounth":
+		endDateTime = time.Date(startDate.Year(), startDateTime.Month()+1, startDate.Day(), 0, 0, 0, 0, l)
+	}
+
+	events, err := a.storage.ListEventsDateForPeriod(&startDateTime, &endDateTime)
+
+	if err != nil {
+		a.Logger.Error(err)
+	} else {
+		a.Logger.Info(fmt.Sprintf("Get events by period %v - %v", startDate, endDateTime))
+	}
+
+	return events, nil
 }

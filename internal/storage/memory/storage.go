@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"sync"
+	"time"
 
 	storage "github.com/SashaMelva/calendar_service/internal/storage"
 )
@@ -101,4 +102,30 @@ func (s *Storage) EditEvent(event *storage.Event) error {
 	}
 
 	return nil
+}
+
+func (s *Storage) ListEventsDateForPeriod(dateStart, dateEnd *time.Time) ([]storage.Event, error) {
+	events := []storage.Event{}
+	query := `select * from test  where date >= date_time_start $1 and date < date_time_start $2`
+	rows, err := s.ConnectionDB.QueryContext(s.Ctx, query, dateStart, dateEnd)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		event := storage.Event{}
+
+		if err := rows.Scan(event); err != nil {
+			return nil, err
+		}
+
+		events = append(events, event)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return events, nil
 }

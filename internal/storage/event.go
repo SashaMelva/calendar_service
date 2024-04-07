@@ -27,7 +27,7 @@ func Time(myTime *time.Time) *string {
 
 func Date(myTime *time.Time) *string {
 	if myTime != nil {
-		date := myTime.Format("2006.01.02")
+		date := myTime.Format("2006-01-02")
 		return &date
 	}
 

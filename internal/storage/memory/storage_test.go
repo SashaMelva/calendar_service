@@ -149,6 +149,45 @@ func TestEditEvent(t *testing.T) {
 	}
 }
 
+func TestListEventsForDay(t *testing.T) {
+	testCases := []struct {
+		name      string
+		dateStart time.Time
+		dateEnd   time.Time
+	}{
+		{
+			name:      "get event for one day",
+			dateStart: "",
+			dateEnd:   "",
+		},
+		{
+			name:      "get events for period",
+			dateStart: "",
+			dateEnd:   "",
+		},
+
+		{
+			name:      "dont exist events",
+			dateStart: "",
+			dateEnd:   "",
+		},
+	}
+
+	s := &Storage{
+		ConnectionDB: newConnection(),
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			event, err := s.ListEventsDateForPeriod(&tc.dateStart, &tc.dateEnd)
+			fmt.Println(event)
+			if err != nil {
+				t.Error(err.Error())
+			}
+		})
+	}
+}
+
 func newConnection() *sql.DB {
 	dsn := "postgres://postgres:qwer@localhost:5436/calendardb"
 	storage, err := sql.Open("pgx", dsn)

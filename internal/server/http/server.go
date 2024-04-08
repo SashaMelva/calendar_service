@@ -7,19 +7,13 @@ import (
 	"time"
 
 	application "github.com/SashaMelva/calendar_service/internal/app"
-	"github.com/SashaMelva/calendar_service/internal/server/hendler"
+	hendler "github.com/SashaMelva/calendar_service/internal/server/hendler"
 	"go.uber.org/zap"
 )
 
 type Server struct {
 	HttpServer *http.Server
 }
-
-type Logger interface { // TODO
-}
-
-// type Application interface { // TODO
-// }
 
 func NewServer(log *zap.SugaredLogger, app *application.App) *Server {
 	log.Info("URL api" + app.Host + ":" + app.Port)

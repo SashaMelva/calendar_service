@@ -16,22 +16,20 @@ type Event struct {
 	Description   string     `json:"description" db:"description"`
 }
 
-func Time(myTime *time.Time) *string {
+func Time(myTime *time.Time) string {
 	if myTime != nil {
-		time := myTime.Format("15:04:05")
-		return &time
+		return myTime.Format("15:04:05")
 	}
 
-	return nil
+	return ""
 }
 
-func Date(myTime *time.Time) *string {
+func Date(myTime *time.Time) string {
 	if myTime != nil {
-		date := myTime.Format("2006-01-02")
-		return &date
+		return myTime.Format("2006-01-02")
 	}
 
-	return nil
+	return ""
 }
 
 func StrToTimeformat(str string, loger zap.SugaredLogger) *time.Time {

@@ -36,17 +36,33 @@ func NewService(log *zap.SugaredLogger, app *application.App, timeout time.Durat
 }
 
 func (s *Service) HendlerEvent(w http.ResponseWriter, req *http.Request) {
-	// resp := &ResponseBody{}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
+	if req.Method == http.MethodGet {
+
+		if req.URL.Path == "/event/day" {
+			args := req.URL.Query()
+			date := args.Get("date")
+			s.getEventsByPeriod(w, date, "Day")
+		} else if req.URL.Path == "/event/week" {
+			args := req.URL.Query()
+			date := args.Get("date")
+			s.getEventsByPeriod(w, date, "Week")
+		} else if req.URL.Path == "/event/mounth" {
+			args := req.URL.Query()
+			date := args.Get("date")
+			s.getEventsByPeriod(w, date, "Mounth")
+		}
+	}
+
 	if req.URL.Path == "/event/" {
 		switch req.Method {
+		case http.MethodGet:
+			s.getAllEventsHandler(w, req, ctx)
 		case http.MethodPost:
 			s.createEventHandler(w, req, ctx)
 		case http.MethodPut:
 			s.editEventHandler(w, req, ctx)
-		case http.MethodGet:
-			s.getAllEventsHandler(w, req, ctx)
 		default:
 			s.Logger.Error(fmt.Sprintf("expect method GET, DELETE or POST at /event/, got %v", req.Method))
 			return
@@ -61,13 +77,7 @@ func (s *Service) HendlerEvent(w http.ResponseWriter, req *http.Request) {
 			intId, err := strconv.Atoi(id)
 			if err != nil {
 				s.Logger.Error(fmt.Sprintf("is not valid if event id, got %v", id))
-				// resp.Error.Message = fmt.Sprintf("is not valid if event id, got %v", id)
-				// w.WriteHeader()
 				http.Error(w, err.Error(), http.StatusBadRequest)
-				// w.WriteHeader(http.StatusBadRequest)
-				// resp.MessageError = fmt.Sprintf("is not valid if event id, got %v", id)
-				// js, _ := json.Marshal(resp)
-				// w.Write(js)
 				return
 			}
 
@@ -107,6 +117,44 @@ func (s *Service) getAllEventsHandler(w http.ResponseWriter, req *http.Request, 
 	w.Write(js)
 }
 
+func (s *Service) getEventsByPeriod(w http.ResponseWriter, strDate, period string) {
+	s.Logger.Info("handling get events by day %s\n")
+
+	date, err := time.Parse(strDate, "")
+
+	if err != nil {
+		s.Logger.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	var p application.Period
+	p = "Day"
+
+	switch period {
+	case "Week":
+		p = "Week"
+	case "Mounth":
+		p = "Mounth"
+	}
+
+	allEvents, err := s.app.GetEventByPeriod(p, &date)
+
+	if err != nil {
+		s.Logger.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	js, err := json.Marshal(allEvents)
+
+	if err != nil {
+		s.Logger.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(js)
+}
 func (s *Service) createEventHandler(w http.ResponseWriter, req *http.Request, ctx context.Context) {
 	s.Logger.Info("add new event at %v\n", req.URL.Path)
 
@@ -148,7 +196,6 @@ func (s *Service) createEventHandler(w http.ResponseWriter, req *http.Request, c
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-
 }
 
 func (s *Service) editEventHandler(w http.ResponseWriter, req *http.Request, ctx context.Context) {

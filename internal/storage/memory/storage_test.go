@@ -150,6 +150,7 @@ func TestEditEvent(t *testing.T) {
 }
 
 func TestListEventsForDay(t *testing.T) {
+	l, _ := time.LoadLocation("Europe/Moscow")
 	testCases := []struct {
 		name      string
 		dateStart time.Time
@@ -157,28 +158,33 @@ func TestListEventsForDay(t *testing.T) {
 	}{
 		{
 			name:      "get event for one day",
-			dateStart: "",
-			dateEnd:   "",
+			dateStart: time.Date(2003, 9, 3, 0, 0, 0, 0, l),
+			dateEnd:   time.Date(2003, 9, 4, 0, 0, 0, 0, l),
 		},
 		{
 			name:      "get events for period",
-			dateStart: "",
-			dateEnd:   "",
+			dateStart: time.Date(2003, 9, 3, 0, 0, 0, 0, l),
+			dateEnd:   time.Date(2024, 4, 6, 0, 0, 0, 0, l),
 		},
-
 		{
-			name:      "dont exist events",
-			dateStart: "",
-			dateEnd:   "",
+			name:      "empty events",
+			dateStart: time.Date(2100, 9, 3, 0, 0, 0, 0, l),
+			dateEnd:   time.Date(2100, 9, 4, 0, 0, 0, 0, l),
+		},
+		{
+			name:      "dateEnd > dateStart",
+			dateStart: time.Date(2003, 9, 4, 0, 0, 0, 0, l),
+			dateEnd:   time.Date(2003, 9, 2, 0, 0, 0, 0, l),
 		},
 	}
 
 	s := &Storage{
 		ConnectionDB: newConnection(),
 	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+
+			fmt.Println(tc.dateStart, tc.dateEnd)
 			event, err := s.ListEventsDateForPeriod(&tc.dateStart, &tc.dateEnd)
 			fmt.Println(event)
 			if err != nil {

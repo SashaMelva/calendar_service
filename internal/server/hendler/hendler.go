@@ -299,11 +299,13 @@ func validEvent(event *storage.Event) (string, string) {
 
 	if event.DateTimeStart == nil {
 		err += "row date start empty;"
-	} else if storage.Date(event.DateTimeStart) == nil {
+	} else if storage.Date(event.DateTimeStart) == "" {
 		err += "date start param empty date;"
 	}
 
-	if event.DateTimeEnd != nil && storage.Date(event.DateTimeEnd) == nil {
+	if event.DateTimeEnd == nil {
+		err += "row date end empty;"
+	} else if storage.Date(event.DateTimeEnd) == "" {
 		err += "date end param empty date;"
 	}
 

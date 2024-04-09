@@ -155,6 +155,7 @@ func (s *Service) getEventsByPeriod(w http.ResponseWriter, strDate, period strin
 	w.WriteHeader(http.StatusOK)
 	w.Write(js)
 }
+
 func (s *Service) createEventHandler(w http.ResponseWriter, req *http.Request, ctx context.Context) {
 	s.Logger.Info("add new event at %v\n", req.URL.Path)
 

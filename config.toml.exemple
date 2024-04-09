@@ -9,5 +9,8 @@ portDB = ""
 usesrDB = ""
 passwordDB = ""
 
-hostServer = ""
-portServer = ""
+hostHttpServer = ""
+portHttpServe = ""
+
+hostGrpcServer = ""
+portGrpcServer = ""

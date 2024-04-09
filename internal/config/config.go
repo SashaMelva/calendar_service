@@ -1,19 +1,29 @@
 package config
 
 import (
+	"time"
+
 	"github.com/spf13/viper"
 	"go.uber.org/zap/zapcore"
 )
 
 type Config struct {
-	App      *ConfigApp
-	Logger   *ConfigLogger
-	DataBase *ConfigDB
+	HttpServer *ConfigHttpServer
+	GrpcServer *ConfigGrpcServer
+	Logger     *ConfigLogger
+	DataBase   *ConfigDB
 }
 
-type ConfigApp struct {
-	Host string
-	Port string
+type ConfigHttpServer struct {
+	Host    string
+	Port    string
+	Timeout time.Duration
+}
+
+type ConfigGrpcServer struct {
+	Host    string
+	Port    string
+	Timeout time.Duration
 }
 
 type ConfigLogger struct {
@@ -40,29 +50,35 @@ func NewConfig(pahToFile string) Config {
 		panic(err)
 	}
 
-	confLog := ConfigLogger{}
-	confDB := ConfigDB{
+	configLog := ConfigLogger{}
+	configDB := ConfigDB{
 		NameDB:   viper.Get("nameDB").(string),
 		Host:     viper.Get("hostDB").(string),
 		Port:     viper.Get("portDB").(string),
 		User:     viper.Get("usesrDB").(string),
 		Password: viper.Get("passwordDB").(string),
 	}
-	confApp := ConfigApp{
-		Host: viper.Get("hostServer").(string),
-		Port: viper.Get("portServer").(string),
+
+	configGrpcServer := ConfigGrpcServer{
+		Host: viper.Get("hostServerGrpc").(string),
+		Port: viper.Get("portServerGrpc").(string),
+	}
+	configHttpServer := ConfigHttpServer{
+		Host: viper.Get("hostServerHttp").(string),
+		Port: viper.Get("portServerHttp").(string),
 	}
 
 	level, err := zapcore.ParseLevel(viper.Get("Level").(string))
 	if err != nil {
-		confLog = ConfigLogger{zapcore.DebugLevel, viper.Get("logEncoding").(string)}
+		configLog = ConfigLogger{zapcore.DebugLevel, viper.Get("logEncoding").(string)}
 	} else {
-		confLog = ConfigLogger{level, viper.Get("logEncoding").(string)}
+		configLog = ConfigLogger{level, viper.Get("logEncoding").(string)}
 	}
 
 	return Config{
-		App:      &confApp,
-		Logger:   &confLog,
-		DataBase: &confDB,
+		HttpServer: &configHttpServer,
+		GrpcServer: &configGrpcServer,
+		Logger:     &configLog,
+		DataBase:   &configDB,
 	}
 }

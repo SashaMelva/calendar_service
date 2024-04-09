@@ -41,5 +41,4 @@ protoc \
 
 .PHONY: build run build-img run-img version test lint
 
-protoc -I proto --go_out=proto --go-grpc_out=proto proto/event.proto
-protoc --proto_path=./internal/server/grpc/proto/ --go_out=. --go_opt=paths=source_relative --go-grpc_out=.  --go-grpc_opt=paths=source_relative
+protoc --proto_path=internal/server/grpc/proto --go_out=internal/server/grpc/gen --go-grpc_out=internal/server/grpc/gen internal/server/grpc/proto/event.proto

@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	application "github.com/SashaMelva/calendar_service/internal/app"
+	"github.com/SashaMelva/calendar_service/internal/app"
+	"github.com/SashaMelva/calendar_service/internal/config"
 	hendler "github.com/SashaMelva/calendar_service/internal/server/hendler"
 	"go.uber.org/zap"
 )
@@ -15,9 +16,9 @@ type Server struct {
 	HttpServer *http.Server
 }
 
-func NewServer(log *zap.SugaredLogger, app *application.App) *Server {
-	log.Info("URL api" + app.Host + ":" + app.Port)
-	timeout := 10 * time.Second
+func NewServer(log *zap.SugaredLogger, app *app.App, config *config.ConfigHttpServer) *Server {
+	log.Info("URL api" + config.Host + ":" + config.Port)
+	timeout := config.Timeout * time.Second
 
 	mux := http.NewServeMux()
 	h := hendler.NewService(log, app, timeout)
@@ -30,7 +31,7 @@ func NewServer(log *zap.SugaredLogger, app *application.App) *Server {
 
 	return &Server{
 		&http.Server{
-			Addr:         app.Host + ":" + app.Port,
+			Addr:         config.Host + ":" + config.Port,
 			Handler:      mux,
 			ReadTimeout:  timeout,
 			WriteTimeout: timeout,

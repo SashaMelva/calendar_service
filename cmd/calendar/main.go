@@ -38,9 +38,9 @@ func main() {
 	connection := sqlstorage.New(config.DataBase, log)
 	//Событие
 	memstorage := memorystorage.New(connection.StorageDb)
-	calendar := app.New(log, memstorage, config.App)
+	calendar := app.New(log, memstorage)
 
-	server := internalhttp.NewServer(log, calendar)
+	httpServer := internalhttp.NewServer(log, calendar, config.HttpServer)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -52,14 +52,14 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
+		if err := httpServer.Stop(ctx); err != nil {
 			log.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
 	log.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
+	if err := httpServer.Start(ctx); err != nil {
 		log.Error("failed to start http server: " + err.Error())
 		cancel()
 		os.Exit(1) //nolint:gocritic

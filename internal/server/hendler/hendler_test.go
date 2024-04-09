@@ -142,10 +142,7 @@ func testService() *Service {
 	}, log)
 
 	memstorage := memorystorage.New(connection.StorageDb)
-	calendar := app.New(log, memstorage, &config.ConfigApp{
-		Host: "localhost",
-		Port: "8447",
-	})
+	calendar := app.New(log, memstorage)
 
 	return &Service{
 		Logger: *log,

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	config "github.com/SashaMelva/calendar_service/internal/config"
 	storage "github.com/SashaMelva/calendar_service/internal/storage"
 	memorystorage "github.com/SashaMelva/calendar_service/internal/storage/memory"
 	"go.uber.org/zap"
@@ -20,8 +19,6 @@ const (
 )
 
 type App struct {
-	Host    string
-	Port    string
 	storage *memorystorage.Storage
 	Logger  *zap.SugaredLogger
 }
@@ -34,10 +31,8 @@ type Storage interface {
 	GetByIdEvent(int) error
 }
 
-func New(logger *zap.SugaredLogger, storage *memorystorage.Storage, conf *config.ConfigApp) *App {
+func New(logger *zap.SugaredLogger, storage *memorystorage.Storage) *App {
 	return &App{
-		Host:    conf.Host,
-		Port:    conf.Port,
 		storage: storage,
 		Logger:  logger,
 	}

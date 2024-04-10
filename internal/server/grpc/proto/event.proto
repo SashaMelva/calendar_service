@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package internalgrpc;
+package grpcproto;
 
 option go_package = "./;simplepb";
 
@@ -8,10 +8,10 @@ import "google/protobuf/timestamp.proto";
 
 service EventService {
      rpc GetEventsByPeriod (EventDateForPeriodRequest) returns (GetEventsResponse) {}
-     rpc GetEventById (Event.Id) returns (GetEventResponse) {}
-     rpc CreateEventHandler (Event) returns (GetResponse) {}
-     rpc EditEventHandler (Event) returns (GetResponse) {}
-     rpc DeleteEventHandlerById (Event.Id) returns (GetResponse) {}
+     rpc GetEventById (EventId) returns (GetEventResponse) {}
+     rpc CreateEvent (Event) returns (GetResponse) {}
+     rpc EditEvent (Event) returns (GetResponse) {}
+     rpc DeleteEventById (EventId) returns (GetResponse) {}
 }
 
 enum Period {
@@ -28,13 +28,15 @@ enum Status {
 }
 
 message Event {
-     message Id {
-          uint32 id = 1;
-     }
+     uint32 id = 1;
      string title = 2;
      google.protobuf.Timestamp date_time_start = 3;
      google.protobuf.Timestamp date_time_end = 4;
      string description = 5;
+}
+
+message EventId {
+     uint32 id = 1;
 }
 
 message EventDateForPeriodRequest {
@@ -44,15 +46,12 @@ message EventDateForPeriodRequest {
 
 message GetEventResponse {
      Event event = 1;
-     GetResponse respose = 2;
 }
 
 message GetEventsResponse {
      repeated Event event = 1;
-     GetResponse respose = 2;
 }
 
 message GetResponse {
      Status status = 1;
-     string message = 2;
 }

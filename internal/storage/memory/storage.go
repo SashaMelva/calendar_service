@@ -104,8 +104,8 @@ func (s *Storage) EditEvent(event *storage.Event) error {
 	return nil
 }
 
-func (s *Storage) ListEventsDateForPeriod(dateStart, dateEnd *time.Time) ([]storage.Event, error) {
-	events := []storage.Event{}
+func (s *Storage) ListEventsDateForPeriod(dateStart, dateEnd *time.Time) ([]*storage.Event, error) {
+	events := []*storage.Event{}
 	query := `select id, title, date_time_start, date_time_end, description from events where date_time_start >= $1::timestamp and date_time_end < $2::timestamp`
 	rows, err := s.ConnectionDB.Query(query, storage.Date(dateStart), storage.Date(dateEnd))
 
@@ -127,7 +127,7 @@ func (s *Storage) ListEventsDateForPeriod(dateStart, dateEnd *time.Time) ([]stor
 			return nil, err
 		}
 
-		events = append(events, event)
+		events = append(events, &event)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

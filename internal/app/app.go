@@ -91,7 +91,7 @@ func (a *App) EditEvent(ctx context.Context, event *storage.Event) error {
 	return err
 }
 
-func (a *App) GetEventByPeriod(period Period, startDate *time.Time) ([]storage.Event, error) {
+func (a *App) GetEventByPeriod(period Period, startDate *time.Time) ([]*storage.Event, error) {
 	l, err := time.LoadLocation("Europe/Moscow")
 	if err != nil {
 		a.Logger.Error(err)

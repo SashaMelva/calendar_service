@@ -11,6 +11,7 @@ import (
 	"time"
 
 	application "github.com/SashaMelva/calendar_service/internal/app"
+	"github.com/SashaMelva/calendar_service/internal/server/validate"
 	"github.com/SashaMelva/calendar_service/internal/storage"
 	"go.uber.org/zap"
 )
@@ -175,7 +176,7 @@ func (s *Service) createEventHandler(w http.ResponseWriter, req *http.Request, c
 		}
 	}
 
-	ok, msg := validEvent(&event)
+	ok, msg := validate.ValidEvent(&event)
 
 	if ok != "OK" {
 		s.Logger.Error("dont valid data")
@@ -228,7 +229,7 @@ func (s *Service) editEventHandler(w http.ResponseWriter, req *http.Request, ctx
 		return
 	}
 
-	ok, msg := validEvent(&event)
+	ok, msg := validate.ValidEvent(&event)
 
 	if ok != "OK" {
 		s.Logger.Error("dont valid data")
@@ -289,30 +290,4 @@ func (s *Service) getEventHandlerById(w http.ResponseWriter, ctx context.Context
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write(js)
-}
-
-func validEvent(event *storage.Event) (string, string) {
-	err := ""
-
-	if event.Title == "" {
-		err += "row title empty;"
-	}
-
-	if event.DateTimeStart == nil {
-		err += "row date start empty;"
-	} else if storage.Date(event.DateTimeStart) == "" {
-		err += "date start param empty date;"
-	}
-
-	if event.DateTimeEnd == nil {
-		err += "row date end empty;"
-	} else if storage.Date(event.DateTimeEnd) == "" {
-		err += "date end param empty date;"
-	}
-
-	if err != "" {
-		return "Err", err
-	}
-
-	return "OK", ""
 }

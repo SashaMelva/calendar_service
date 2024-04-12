@@ -1,5 +1,0 @@
-1 server http
-2 metod for server
-3 metod db
-4 tests
-5 rgpc server

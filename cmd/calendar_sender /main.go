@@ -6,9 +6,6 @@ import (
 	"github.com/SashaMelva/calendar_service/internal/app"
 	"github.com/SashaMelva/calendar_service/internal/config"
 	"github.com/SashaMelva/calendar_service/internal/logger"
-	internalgrpc "github.com/SashaMelva/calendar_service/internal/server/grpc"
-	memorystorage "github.com/SashaMelva/calendar_service/internal/storage/memory"
-	sqlstorage "github.com/SashaMelva/calendar_service/internal/storage/sql"
 )
 
 var configFile string
@@ -25,9 +22,8 @@ func main() {
 	// 	return
 	// }
 
-	config := config.NewConfigApp(configFile)
+	config := config.NewConfigSender(configFile)
 	log := logger.NewLogger(config.Logger)
-
 	//Соединение с бд
 	connection := sqlstorage.New(config.DataBase, log)
 	//Событие

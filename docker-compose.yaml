@@ -1,8 +1,8 @@
 version: "3"
 
 services:
-  calendar_service:
-    build: ./
+  calendar_app:
+    build: ./calendar_app
     command: ./wait-for-postgres.sh postgres ./calendar_service
     depends_on:
       - postgres
@@ -10,7 +10,17 @@ services:
       - "8088:8088"
     environment:
       DB_PASSWORD: qwer
+
       
+  calendar_scheduler:
+    build: ./calendar_scheduler
+    ports:
+      - "8085:8085"
+      
+  calendar_sender: 
+    build: ./calendar_sender
+    ports:
+      - "8086:8086"
 
   postgres:
     restart: always

@@ -19,7 +19,11 @@ type ConfigSheduler struct {
 	Broker     *ConfigBroker
 	Logger     *ConfigLogger
 	Exchange   *ExchangeBroker
-	DataBase   *ConfigDB
+}
+type ConfigSender struct {
+	Broker   *ConfigBroker
+	Exchange *ExchangeBroker
+	Logger   *ConfigLogger
 }
 
 type ExchangeBroker struct {
@@ -117,13 +121,6 @@ func NewConfigSheduler(pahToFile string) ConfigSheduler {
 	}
 
 	configLog := ConfigLogger{}
-	configDB := ConfigDB{
-		NameDB:   viper.Get("nameDB").(string),
-		Host:     viper.Get("hostDB").(string),
-		Port:     viper.Get("portDB").(string),
-		User:     viper.Get("usesrDB").(string),
-		Password: viper.Get("passwordDB").(string),
-	}
 	configBroker := ConfigBroker{
 		Host:     viper.Get("hostBroker").(string),
 		Port:     viper.Get("portBroker").(string),
@@ -153,6 +150,44 @@ func NewConfigSheduler(pahToFile string) ConfigSheduler {
 		Exchange:   &exchange,
 		Broker:     &configBroker,
 		Logger:     &configLog,
-		DataBase:   &configDB,
+	}
+}
+
+func NewConfigSender(pahToFile string) ConfigSender {
+	viper.AddConfigPath(pahToFile)
+	viper.SetConfigName("config")
+	viper.SetConfigType("toml")
+	viper.AddConfigPath(".")
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	configLog := ConfigLogger{}
+	configBroker := ConfigBroker{
+		Host:     viper.Get("hostBroker").(string),
+		Port:     viper.Get("portBroker").(string),
+		User:     viper.Get("usesrBroker").(string),
+		Password: viper.Get("passwordBroker").(string),
+	}
+	exchange := ExchangeBroker{
+		Type:       viper.Get("exchangeType").(string),
+		Name:       viper.Get("exchangeName").(string),
+		Reliable:   viper.Get("exchangeReliable").(bool),
+		RoutingKey: viper.Get("exchangeRoutingKey").(string),
+	}
+
+	level, err := zapcore.ParseLevel(viper.Get("Level").(string))
+	if err != nil {
+		configLog = ConfigLogger{zapcore.DebugLevel, viper.Get("logEncoding").(string)}
+	} else {
+		configLog = ConfigLogger{level, viper.Get("logEncoding").(string)}
+	}
+
+	return ConfigSender{
+		Exchange: &exchange,
+		Broker:   &configBroker,
+		Logger:   &configLog,
 	}
 }

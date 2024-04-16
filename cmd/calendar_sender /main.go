@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
+	"time"
 
-	"github.com/SashaMelva/calendar_service/internal/app"
 	"github.com/SashaMelva/calendar_service/internal/config"
+	"github.com/SashaMelva/calendar_service/internal/consumer"
 	"github.com/SashaMelva/calendar_service/internal/logger"
 )
 
@@ -24,14 +25,25 @@ func main() {
 
 	config := config.NewConfigSender(configFile)
 	log := logger.NewLogger(config.Logger)
-	//Соединение с бд
-	connection := sqlstorage.New(config.DataBase, log)
-	//Событие
-	memstorage := memorystorage.New(connection.StorageDb)
-	calendar := app.New(log, memstorage)
 
-	grpcServer := internalgrpc.NewGRPCServer(log, calendar)
-	internalgrpc.ListenServer(grpcServer, config.GrpcServer, log)
+	c, err := consumer.NewConsumer(&config.Exchange, &config.Broker)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	if *lifetime > 0 {
+		log.Printf("running for %s", *lifetime)
+		time.Sleep(*lifetime)
+	} else {
+		log.Printf("running forever")
+		select {}
+	}
+
+	log.Printf("shutting down")
+
+	if err := c.Shutdown(); err != nil {
+		log.Fatalf("error during shutdown: %s", err)
+	}
 
 	// httpServer := internalhttp.NewServer(log, calendar, config.HttpServer)
 

@@ -2,11 +2,10 @@ package main
 
 import (
 	"flag"
-	"time"
 
 	"github.com/SashaMelva/calendar_service/internal/config"
-	"github.com/SashaMelva/calendar_service/internal/consumer"
 	"github.com/SashaMelva/calendar_service/internal/logger"
+	"github.com/SashaMelva/calendar_service/internal/rabbit"
 )
 
 var configFile string
@@ -26,47 +25,45 @@ func main() {
 	config := config.NewConfigSender(configFile)
 	log := logger.NewLogger(config.Logger)
 
-	c, err := consumer.NewConsumer(&config.Exchange, &config.Broker)
+	conn := rabbit.OpenConnection(log, config.Broker)
+
+	defer func() {
+		_ = conn.Close() // Закрываем подключение в случае удачной попытки подключения
+	}()
+
+	channel, err := conn.Channel()
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Fatalf("failed to open a channel. Error: %s", err)
 	}
 
-	if *lifetime > 0 {
-		log.Printf("running for %s", *lifetime)
-		time.Sleep(*lifetime)
-	} else {
-		log.Printf("running forever")
-		select {}
+	defer func() {
+		_ = channel.Close() // Закрываем подключение в случае удачной попытки подключения
+	}()
+
+	rabbit.QueueDeclare(log, channel, "sendingEvents")
+
+	messages, err := channel.Consume(
+		"sendingEvents", // queue
+		"",              // consumer
+		true,            // auto-ack
+		false,           // exclusive
+		false,           // no-local
+		false,           // no-wait
+		nil,             // args
+	)
+
+	if err != nil {
+		log.Fatalf("failed to register a consumer. Error: %s", err)
 	}
 
-	log.Printf("shutting down")
+	var forever chan struct{}
 
-	if err := c.Shutdown(); err != nil {
-		log.Fatalf("error during shutdown: %s", err)
-	}
+	go func() {
+		for message := range messages {
+			log.Info(message.Body)
+		}
+	}()
 
-	// httpServer := internalhttp.NewServer(log, calendar, config.HttpServer)
-
-	// ctx, cancel := signal.NotifyContext(context.Background(),
-	// 	syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	// defer cancel()
-
-	// go func() {
-	// 	<-ctx.Done()
-
-	// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-	// 	defer cancel()
-
-	// 	if err := httpServer.Stop(ctx); err != nil {
-	// 		log.Error("failed to stop http server: " + err.Error())
-	// 	}
-	// }()
-
-	log.Info("calendar is running...")
-
-	// if err := httpServer.Start(ctx); err != nil {
-	// 	log.Error("failed to start http server: " + err.Error())
-	// 	cancel()
-	// 	os.Exit(1) //nolint:gocritic
-	// }
+	log.Info(" [*] Waiting for messages. To exit press CTRL+C")
+	<-forever
 }

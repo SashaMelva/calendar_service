@@ -2,16 +2,14 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"time"
 
 	"github.com/SashaMelva/calendar_service/internal/config"
 	"github.com/SashaMelva/calendar_service/internal/logger"
-	"github.com/SashaMelva/calendar_service/internal/scheduler"
+	"github.com/SashaMelva/calendar_service/internal/rabbit"
 	internalgrpc "github.com/SashaMelva/calendar_service/internal/server/grpc"
 	proto "github.com/SashaMelva/calendar_service/internal/server/grpc/gen"
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 var configFile string
@@ -31,14 +29,25 @@ func main() {
 	config := config.NewConfigSheduler(configFile)
 	log := logger.NewLogger(config.Logger)
 
-	connection, err := amqp.Dial("amqp://" + config.Broker.User + ":" + config.Broker.Password + "@" + config.Broker.Host + ":" + config.Broker.Port + "/") // Создаем подключение к RabbitMQ
+	conn := rabbit.OpenConnection(log, config.Broker)
+
+	defer func() {
+		_ = conn.Close() // Закрываем подключение в случае удачной попытки
+	}()
+
+	log.Info("got Connection, getting Channel")
+	channel, err := conn.Channel()
+
 	if err != nil {
-		log.Fatalf("unable to open connect to RabbitMQ server. Error: %s", err)
+		log.Fatal("Channel:  " + err.Error())
 	}
 
 	defer func() {
-		_ = connection.Close() // Закрываем подключение в случае удачной попытки
+		_ = channel.Close() // Закрываем подключение в случае удачной попытки подключения
 	}()
+
+	rabbit.QueueDeclare(log, channel, "sendingEvents")
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 
@@ -49,12 +58,17 @@ func main() {
 		log.Error(err)
 	}
 
-	jsonBytes, err := json.Marshal(event)
+	message, err := rabbit.NewMessage(&rabbit.MessageEvent{
+		Id:        event.Event.Id,
+		Title:     event.Event.Title,
+		DateStart: event.Event.DateTimeEnd.AsTime(),
+	})
+
 	if err != nil {
-		log.Error("Ошибка при сериализации в JSON:", err)
+		log.Fatal(err)
 	}
 
-	err = scheduler.NewPublisher(jsonBytes, ctx, connection, config.Exchange, log, config.Broker)
+	rabbit.PublishMessage(ctx, "sendingEvents", message, log, channel)
 
 	if err != nil {
 		log.Fatalf("unable to open connect to RabbitMQ server. Error: %s", err)
